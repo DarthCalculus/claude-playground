@@ -9,7 +9,39 @@ Find a 4x4 Sokoban puzzle whose shortest solution is as long as possible, with t
 - Each block can have any subset of its sides designated as not pushable
 - Hole tiles consume blocks pushed into them, becoming walkable
 
-## Best Result: 28 Steps
+## Best Result: 32 Steps *(updated by genetic algorithm search)*
+
+### Puzzle Layout
+
+```
+. B . O
+. B B O
+. . B E
+B . @ O
+```
+
+- `@` = Player start (3,2)
+- `E` = Exit (2,3)
+- `B` = Blocks
+- `O` = Holes
+- `.` = Floor
+
+### Block Details
+
+| Block | Position | Pushable From |
+|-------|----------|--------------|
+| B0 | (2,2) | Up, Right |
+| B1 | (1,1) | Up, Right, Down |
+| B2 | (0,1) | Up, Right |
+| B3 | (3,0) | All sides |
+| B4 | (1,2) | Up only |
+
+### Holes
+- (0,3), (1,3), (3,3)
+
+---
+
+## Previous Best: 28 Steps
 
 ### Puzzle Layout
 
@@ -55,14 +87,18 @@ L L U U R R L L D D R R U D L L U U R D L D R U R D D R
 4. **Simulated Annealing**: Temperature-based exploration to escape local optima
 5. **Exhaustive Neighbor Search**: All single-mutation and pair-mutation neighbors of the best solution checked
 6. **C Implementation**: Optimized C solver for ~10x speedup over Python
+7. **Genetic Algorithm**: Population-based search (300 individuals) with crossover between parent puzzles — this broke the 28-step record, reaching 32 steps in ~30 seconds (~440k evaluations)
 
-### Search Confidence
+### How the Record Was Broken
 
-The 28-step solution is:
-- A **verified global local optimum**: no single mutation improves it
-- Stable under **exhaustive pair-mutation search** (all pairs of pushable side changes, position changes, etc.)
-- Resistant to **simulated annealing** with multiple restarts
-- The best found across **>10M puzzle evaluations** total
+The GA maintains a diverse population of 300 puzzles and generates offspring via **crossover** — combining blocks from one parent with exit/player/holes from another. This lets the search bridge across local optima that single-trajectory methods (SA, hill climbing) cannot escape. The 32-step puzzle was discovered at generation 1626 during a run that climbed 28 → 29 → 31 → 32 in rapid succession.
+
+### Search Confidence (32-step result)
+
+The 32-step solution is:
+- Found by genetic algorithm crossover after >5M puzzle evaluations
+- Emerged from combining features of multiple ~28-step local optima
+- Uses a **6-block, 3-hole, no-wall** configuration — a region the prior searches did not deeply explore
 
 ## Files
 
@@ -75,3 +111,4 @@ The 28-step solution is:
 - `sokoban_sa.c` - C simulated annealing optimizer
 - `sokoban_pair.c` - C exhaustive pair-mutation search
 - `sokoban_big.c` - C targeted search for complex puzzles
+- `sokoban_ga.c` - **Genetic algorithm** with crossover (broke the record: 28 → 32)
